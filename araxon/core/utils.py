@@ -38,6 +38,22 @@ def chunk_text(text: str, size: int = 200) -> list[str]:
     sentences = re.split(r"(?<=[.!?])\s+", text)
     current_chunk = ""
     for sentence in sentences:
+        if len(sentence) > size:
+            if current_chunk:
+                chunks.append(current_chunk.strip())
+                current_chunk = ""
+            start = 0
+            while start < len(sentence):
+                end = min(start + size, len(sentence))
+                split_at = sentence.rfind(" ", start, end)
+                if split_at > start:
+                    end = split_at
+                piece = sentence[start:end].strip()
+                if piece:
+                    chunks.append(piece)
+                start = end + 1 if end < len(sentence) and sentence[end:end + 1] == " " else end
+            continue
+
         if len(current_chunk) + len(sentence) <= size:
             current_chunk += sentence + " "
         else:
