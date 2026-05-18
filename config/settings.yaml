@@ -1,0 +1,18 @@
+app:
+  name: ARAXON
+  version: 0.1.0
+features:
+  voice:
+    enabled: false
+  vision:
+    enabled: false
+  memory:
+    enabled: false
+  automation:
+    enabled: false
+  agents:
+    enabled: false
+  internet:
+    enabled: false
+  ui:
+    enabled: false
