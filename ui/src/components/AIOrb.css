@@ -1,0 +1,98 @@
+.orb-container {
+  position: relative;
+  width: 400px;
+  height: 400px;
+  margin: 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orb-wrapper {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orb-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.orb-ring.outer {
+  filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.5));
+}
+
+.orb-ring.middle {
+  opacity: 0.5;
+}
+
+.waveform-canvas {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.orb-center {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(30, 41, 59, 0.5) 0%, rgba(8, 11, 20, 0.9) 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.orb-logo {
+  width: 80px;
+  height: 80px;
+  z-index: 3;
+  filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));
+}
+
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background-color: rgba(59, 130, 246, 0.5);
+  animation: float-particle 4s ease-in-out infinite;
+}
+
+@keyframes float-particle {
+  0%, 100% {
+    opacity: 0.2;
+    transform: translate(0, 0);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(20px, -20px);
+  }
+}
+
+.orb-label {
+  position: absolute;
+  bottom: -50px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  z-index: 4;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--accent-cyan);
+}

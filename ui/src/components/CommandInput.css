@@ -1,0 +1,88 @@
+.command-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  width: 90%;
+  max-width: 1000px;
+  margin-bottom: 20px;
+}
+
+.input-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0 12px;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  color: var(--text-primary);
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: 4px;
+}
+
+.command-input {
+  flex: 1;
+  padding: 12px 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.send-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--accent-blue);
+  border-radius: 4px;
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.send-btn:hover {
+  background-color: #2563eb;
+  transform: scale(1.05);
+}
+
+.send-btn:active {
+  transform: scale(0.98);
+}
+
+.quick-commands {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.command-chip {
+  padding: 6px 12px;
+  border-radius: 20px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.command-chip:hover {
+  background-color: var(--accent-blue);
+  color: white;
+  border-color: var(--accent-blue);
+}

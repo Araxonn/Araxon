@@ -1,0 +1,78 @@
+.agent-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 6px 0;
+}
+
+.step.done {
+  opacity: 0.6;
+}
+
+.step.running {
+  color: var(--accent-blue);
+}
+
+.step.pending {
+  color: var(--text-muted);
+}
+
+.step-indicator {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.check-icon {
+  color: var(--accent-green);
+}
+
+.loader-icon {
+  color: var(--accent-blue);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.circle-icon {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--text-muted);
+}
+
+.step-text {
+  flex: 1;
+  color: inherit;
+}
+
+.step-text.line-through {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.step-badge {
+  font-size: 10px;
+  background-color: rgba(16, 185, 129, 0.2);
+  color: var(--accent-green);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+}
