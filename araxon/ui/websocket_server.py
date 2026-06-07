@@ -117,34 +117,65 @@ class ARAxonWebSocketServer:
         msg_type = data.get("type")
         msg_data = data.get("data", {})
 
-        if msg_type == "command":
-            # Frontend sends a text command
-            logger.info(f"UI command received: {msg_data.get('text')}")
-            # Will be handled by main.py's voice_input_pipeline
-            # message queued for processing
+        try:
+            if msg_type == "command":
+                # Frontend sends a text command
+                text = msg_data.get("text", "")
+                logger.info(f"UI command received: {text}")
+                # Queue for processing in voice_input_pipeline
+                # This will be picked up by the main command router
 
-        elif msg_type == "routine":
-            # Frontend requests a routine launch
-            routine_name = msg_data.get("name")
-            logger.info(f"UI routine requested: {routine_name}")
+            elif msg_type == "routine":
+                # Frontend requests a routine launch
+                routine_name = msg_data.get("name")
+                logger.info(f"UI routine requested: {routine_name}")
+                # Queue routine to execute
 
-        elif msg_type == "settings_update":
-            # Frontend updates settings
-            setting_name = msg_data.get("name")
-            setting_value = msg_data.get("value")
-            logger.info(f"UI settings update: {setting_name} = {setting_value}")
+            elif msg_type == "ingest_file":
+                # Frontend ingests a file
+                content = msg_data.get("content", "")
+                name = msg_data.get("name", "unknown")
+                logger.info(f"UI file ingestion: {name}")
+                # Queue for file ingestion in memory system
 
-        elif msg_type == "nav_change":
-            # Frontend navigation changed (for logging)
-            nav_section = msg_data.get("section")
-            logger.info(f"UI navigation: {nav_section}")
+            elif msg_type == "mic_toggle":
+                # Toggle microphone
+                enabled = msg_data.get("enabled", False)
+                logger.info(f"UI mic toggle: {enabled}")
+                # Update VAD or listening state
 
-        elif msg_type == "ping":
-            # Frontend ping request
-            await self._send_to_client(
-                websocket=None,  # Will broadcast
-                message={"type": "pong", "data": {"status": "online", "timestamp": datetime.now().isoformat()}},
-            )
+            elif msg_type == "voice_toggle":
+                # Toggle voice output
+                enabled = msg_data.get("enabled", False)
+                logger.info(f"UI voice toggle: {enabled}")
+                # Update TTS output state
+
+            elif msg_type == "settings_update":
+                # Frontend updates settings
+                logger.info(f"UI settings update: {msg_data}")
+                # Apply settings to system
+
+            elif msg_type == "nav_change":
+                # Frontend navigation changed
+                nav = msg_data.get("nav")
+                logger.info(f"UI navigation: {nav}")
+                # Send relevant data based on navigation
+
+            elif msg_type == "ping":
+                # Frontend ping request
+                await self.broadcast({
+                    "type": "pong",
+                    "data": {
+                        "status": "online",
+                        "timestamp": datetime.now().isoformat()
+                    }
+                })
+
+            else:
+                logger.warning(f"Unknown message type from UI: {msg_type}")
+
+        except Exception as e:
+            logger.error(f"Error handling UI message type {msg_type}: {e}")
 
     async def broadcast(self, message: Dict[str, Any]):
         """
@@ -190,3 +221,120 @@ class ARAxonWebSocketServer:
                 await websocket.send(json.dumps(message))
             except Exception as e:
                 logger.error(f"Error sending to client: {e}")
+
+    # ===== Helper methods for sending specific message types =====
+
+    async def send_state(self, state: str):
+        """Send current araxon state (listening, executing, code, thinking)."""
+        await self.broadcast({
+            "type": "state",
+            "data": {"state": state}
+        })
+
+    async def send_transcript(self, role: str, text: str):
+        """Send a transcript entry (user or araxon message)."""
+        await self.broadcast({
+            "type": "transcript",
+            "data": {"role": role, "text": text, "timestamp": datetime.now().isoformat()}
+        })
+
+    async def send_waveform(self, levels: list):
+        """Send waveform levels for audio visualization."""
+        await self.broadcast({
+            "type": "waveform",
+            "data": levels[:40]  # Send up to 40 levels
+        })
+
+    async def send_system_stats(self, cpu: float, ram: float, gpu: float, net: float, disk: float, battery: float):
+        """Send system statistics."""
+        await self.broadcast({
+            "type": "system_stats",
+            "data": {
+                "cpu": int(cpu),
+                "ram": int(ram),
+                "gpu": int(gpu),
+                "net": int(net),
+                "disk": int(disk),
+                "battery": int(battery)
+            }
+        })
+
+    async def send_agent_step(self, index: int, title: str, status: str, percent: int = 0, result: str = ""):
+        """Send agent step update (done, running, pending)."""
+        await self.broadcast({
+            "type": "agent_step",
+            "data": {
+                "index": index,
+                "title": title,
+                "status": status,
+                "percent": percent,
+                "result": result
+            }
+        })
+
+    async def send_code_update(self, name: str, content: str, language: str = "js"):
+        """Send code file update."""
+        await self.broadcast({
+            "type": "code_update",
+            "data": {
+                "name": name,
+                "content": content,
+                "language": language
+            }
+        })
+
+    async def send_code_suggestion(self, title: str, description: str):
+        """Send a code suggestion."""
+        await self.broadcast({
+            "type": "code_suggestion",
+            "data": {
+                "title": title,
+                "description": description
+            }
+        })
+
+    async def send_system_info(self, info: Dict[str, Any]):
+        """Send system information."""
+        await self.broadcast({
+            "type": "system_info",
+            "data": info
+        })
+
+    async def send_notification(self, title: str, message: str, notif_type: str = "info"):
+        """Send a notification to display."""
+        await self.broadcast({
+            "type": "notification",
+            "data": {
+                "title": title,
+                "message": message,
+                "type": notif_type
+            }
+        })
+
+    async def send_log_line(self, level: str, message: str, module: str = "", timestamp: str = None):
+        """Send a log line to the Logs tab."""
+        if timestamp is None:
+            timestamp = datetime.now().isoformat()
+        await self.broadcast({
+            "type": "log_line",
+            "data": {
+                "level": level,
+                "message": message,
+                "module": module,
+                "timestamp": timestamp
+            }
+        })
+
+    async def send_memory_stats(self, total: int, files: int, session_turns: int, recent: list = None):
+        """Send memory statistics."""
+        if recent is None:
+            recent = []
+        await self.broadcast({
+            "type": "memory_stats",
+            "data": {
+                "total": total,
+                "files": files,
+                "session_turns": session_turns,
+                "recent": recent
+            }
+        })

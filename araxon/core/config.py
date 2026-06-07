@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     DEBUG_MODE: bool = False
     LOG_LEVEL: str = "INFO"
     GROQ_API_KEY: Optional[str] = None
-    GROQ_MODEL: str = "llama3-8b-8192"
+    GROQ_MODEL: str = "llama-3.1-8b-instant"
     OLLAMA_MODEL: str = "llama3"
     PREFERRED_BACKEND: str = "groq"
     OLLAMA_BASE_URL: str = "http://localhost:11434"
