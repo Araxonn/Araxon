@@ -1,7 +1,6 @@
 import React from 'react'
 import { useAppStore } from '../../store/useAppStore'
 import { useWebSocket } from '../../hooks/useWebSocket'
-import { Button } from '../ui/button'
 import {
   Mic,
   MicOff,
@@ -29,96 +28,89 @@ const QuickActions = () => {
       id: 'mic',
       icon: micEnabled ? Mic : MicOff,
       label: 'Voice',
-      tooltip: 'Toggle microphone',
       action: () => {
+        const next = !micEnabled
         toggleMic()
-        sendMicToggle(!micEnabled)
+        sendMicToggle(next)
       },
       isActive: false,
-      disabled: false,
       color: micEnabled ? 'text-arx-cyan' : 'text-arx-red',
     },
     {
       id: 'vision',
       icon: Eye,
       label: 'Vision',
-      tooltip: 'Analyze screen',
       action: () => {
         setActivePanel('orb')
         sendCommand('what do you see')
       },
       isActive: activePanel === 'orb',
-      disabled: false,
       color: 'text-arx-cyan',
     },
     {
       id: 'terminal',
       icon: TerminalSquare,
       label: 'Terminal',
-      tooltip: 'Open terminal',
       action: () => setActivePanel('terminal'),
       isActive: activePanel === 'terminal',
-      disabled: false,
       color: 'text-arx-green',
     },
     {
       id: 'files',
       icon: FolderOpen,
       label: 'Files',
-      tooltip: 'Browse files',
       action: () => setActivePanel('files'),
       isActive: activePanel === 'files',
-      disabled: false,
       color: 'text-arx-orange',
     },
     {
       id: 'memory',
       icon: Brain,
       label: 'Memory',
-      tooltip: 'View memory',
       action: () => {
         setActivePanel('memory')
         setMemoryPanelOpen(true)
         sendCommand('what do you remember')
       },
       isActive: activePanel === 'memory',
-      disabled: false,
       color: 'text-arx-purple',
     },
     {
       id: 'automation',
       icon: Zap,
       label: 'Automation',
-      tooltip: 'Automation status',
       action: () => setActivePanel('automation'),
       isActive: activePanel === 'automation',
-      disabled: false,
       color: 'text-arx-blue',
     },
   ]
 
   return (
-    <div className="flex justify-center gap-4 pt-4">
+    <div className="flex justify-center gap-6 px-4 py-3">
       {actions.map((action) => {
         const Icon = action.icon
         return (
-          <Button
+          <button
             key={action.id}
-            variant="ghost"
-            size="icon"
-            className={cn(
-              'h-14 w-14 rounded-full border-2 transition-all',
-              action.isActive
-                ? 'border-arx-blue bg-arx-active'
-                : 'border-arx-border hover:border-arx-blue',
-              action.color
-            )}
+            type="button"
+            className="flex flex-col items-center gap-1.5 group"
             onClick={action.action}
-            disabled={action.disabled}
-            title={action.tooltip}
           >
-            <Icon size={24} />
-          </Button>
+            <div
+              className={cn(
+                'h-12 w-12 rounded-full border flex items-center justify-center transition-all duration-200',
+                action.isActive
+                  ? 'border-arx-blue bg-arx-active shadow-arx-glow-sm'
+                  : 'border-arx-border bg-arx-card/50 hover:border-arx-blue/50 hover:shadow-arx-glow-sm',
+                action.color
+              )}
+            >
+              <Icon size={20} />
+            </div>
+            <span className="text-[10px] text-arx-muted group-hover:text-arx-secondary transition-colors">
+              {action.label}
+            </span>
+          </button>
         )
       })}
     </div>

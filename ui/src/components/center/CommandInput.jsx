@@ -2,7 +2,8 @@ import React, { useRef, useState } from 'react'
 import { useAppStore } from '../../store/useAppStore'
 import { useWebSocket } from '../../hooks/useWebSocket'
 import { Button } from '../ui/button'
-import { Paperclip, Mic, Send, Loader2 } from 'lucide-react'
+import { Paperclip, Mic, ArrowRight, Loader2 } from 'lucide-react'
+import { cn } from '../../lib/utils'
 
 const CommandInput = () => {
   const {
@@ -48,18 +49,14 @@ const CommandInput = () => {
   }
 
   const handleMicToggle = () => {
+    const next = !micEnabled
     toggleMic()
-    sendMicToggle(!micEnabled)
+    sendMicToggle(next)
   }
 
   const getQuickChips = () => {
     if (activeMode === 'Execute Mode') {
-      return [
-        'Show Logs',
-        'Run Diagnostics',
-        'Task Manager',
-        'Stop Execution',
-      ]
+      return ['Open VS Code', 'Show Logs', 'Run Diagnostics', 'Task Manager', 'Stop Execution']
     }
     if (activeMode === 'Code Mode') {
       return [
@@ -69,6 +66,7 @@ const CommandInput = () => {
         'Generate Tests',
         'Refactor',
         'Docs',
+        'Commit Changes',
       ]
     }
     return [
@@ -101,33 +99,12 @@ const CommandInput = () => {
   }
 
   return (
-    <div className="space-y-2 px-4 py-4 border-t border-arx-border">
-      {/* Quick Chips */}
-      <div className="flex flex-wrap gap-2 mb-3">
-        {getQuickChips().map((chip) => (
-          <Button
-            key={chip}
-            variant="outline"
-            size="sm"
-            className="text-xs h-6 text-arx-secondary hover:text-arx-text"
-            onClick={() => handleQuickChip(chip)}
-          >
-            {chip === 'Stop Execution' ? (
-              <span className="text-arx-red font-bold">{chip}</span>
-            ) : (
-              chip
-            )}
-          </Button>
-        ))}
-      </div>
-
-      {/* Input Row */}
-      <div className="flex items-center gap-2">
-        {/* File Input */}
+    <div className="px-4 py-4 border-t border-arx-border/60 space-y-3">
+      <div className="relative flex items-center gap-2 arx-input-field px-3 py-2.5">
         <input
           ref={fileInputRef}
           type="file"
-          accept=".txt,.md,.py,.pdf,.json"
+          accept=".txt,.md,.py,.pdf,.json,.jsx,.tsx,.js,.ts"
           onChange={handleFileIngest}
           className="hidden"
         />
@@ -135,57 +112,68 @@ const CommandInput = () => {
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-arx-muted hover:text-arx-text"
+          className="h-7 w-7 text-arx-muted hover:text-arx-text shrink-0"
           onClick={() => fileInputRef.current?.click()}
           title="Attach file"
         >
           <Paperclip size={16} />
         </Button>
 
-        {/* Mic Button */}
         <Button
           variant="ghost"
           size="icon"
-          className={`h-8 w-8 ${
-            micEnabled
-              ? 'text-arx-cyan'
-              : 'text-arx-red'
-          }`}
+          className={cn(
+            'h-7 w-7 shrink-0',
+            micEnabled ? 'text-arx-cyan' : 'text-arx-red'
+          )}
           onClick={handleMicToggle}
           title={micEnabled ? 'Disable mic' : 'Enable mic'}
         >
           <Mic size={16} />
         </Button>
 
-        {/* Text Input */}
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !isProcessing) {
-              handleSendCommand()
-            }
+            if (e.key === 'Enter' && !isProcessing) handleSendCommand()
           }}
           placeholder={getPlaceholder()}
-          className="flex-1 h-8 px-3 bg-arx-input border border-arx-border rounded text-sm text-arx-text placeholder-arx-muted focus:outline-none focus:border-arx-blue transition-colors"
+          className="flex-1 bg-transparent text-sm text-arx-text placeholder:text-arx-muted focus:outline-none min-w-0"
         />
 
-        {/* Send Button */}
         <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-arx-blue hover:text-arx-cyan disabled:opacity-50"
+          size="sm"
+          className="h-8 px-4 bg-arx-blue hover:bg-arx-blue/90 text-white rounded-lg gap-1.5 shrink-0"
           onClick={handleSendCommand}
           disabled={!input.trim() || isProcessing}
-          title="Send command"
         >
           {isProcessing ? (
-            <Loader2 size={16} className="animate-spin" />
+            <Loader2 size={14} className="animate-spin" />
           ) : (
-            <Send size={16} />
+            <>
+              Send
+              <ArrowRight size={14} />
+            </>
           )}
         </Button>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {getQuickChips().map((chip) => (
+          <button
+            key={chip}
+            type="button"
+            className={cn(
+              'arx-chip',
+              chip === 'Stop Execution' && 'border-arx-red/40 text-arx-red hover:border-arx-red'
+            )}
+            onClick={() => handleQuickChip(chip)}
+          >
+            {chip}
+          </button>
+        ))}
       </div>
     </div>
   )

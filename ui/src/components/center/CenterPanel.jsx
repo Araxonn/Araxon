@@ -3,13 +3,16 @@ import AIOrb from '../orb/AIOrb'
 import QuickActions from './QuickActions'
 import SystemMonitor from './SystemMonitor'
 import CommandInput from './CommandInput'
+import CenterGreeting from '../layout/CenterGreeting'
+import CodeEditor from '../panels/CodePanel'
 import MetricDetailOverlay from '../overlays/MetricDetailOverlay'
 import { useSystemStats } from '../../hooks/useSystemStats'
-import { ScrollArea } from '../ui/scroll-area'
+import { useAppStore } from '../../store/useAppStore'
 
 const CenterPanel = () => {
   const [selectedMetric, setSelectedMetric] = useState(null)
   const { getStatHistory } = useSystemStats()
+  const { araxonState } = useAppStore()
 
   const metricLabels = {
     cpu: 'CPU',
@@ -20,31 +23,42 @@ const CenterPanel = () => {
     battery: 'Battery',
   }
 
+  const isCodeMode = araxonState === 'code'
+
   return (
-    <ScrollArea className="flex-1 flex flex-col bg-arx-bg">
-      <div className="flex-1 flex flex-col">
-        {/* AI Orb */}
-        <div className="flex-1 flex items-center justify-center py-8 px-4">
+    <div className="flex-1 flex flex-col min-w-0 bg-arx-bg bg-arx-radial relative">
+      <div className="absolute inset-0 bg-arx-grid bg-grid opacity-40 pointer-events-none" />
+
+      <CenterGreeting />
+
+      <div className="flex-1 flex flex-col min-h-0 relative z-10">
+        {/* Orb / Visualizer */}
+        <div
+          className={`flex items-center justify-center px-4 ${
+            isCodeMode ? 'py-4 flex-shrink-0' : 'flex-1 py-6'
+          }`}
+        >
           <AIOrb />
         </div>
 
-        {/* Quick Actions */}
         <QuickActions />
 
-        {/* System Monitor */}
-        <div className="px-4 py-4 border-t border-arx-border">
+        {/* Code editor in code mode */}
+        {isCodeMode && (
+          <div className="flex-1 min-h-0 mx-4 mb-2 arx-panel rounded-xl overflow-hidden">
+            <CodeEditor embedded />
+          </div>
+        )}
+
+        <div className="px-4 py-3 border-t border-arx-border/60">
           <SystemMonitor
-            onMetricClick={(metric) => {
-              setSelectedMetric(metric)
-            }}
+            onMetricClick={(metric) => setSelectedMetric(metric)}
           />
         </div>
 
-        {/* Command Input */}
         <CommandInput />
       </div>
 
-      {/* Metric Detail Modal */}
       {selectedMetric && (
         <MetricDetailOverlay
           metric={selectedMetric}
@@ -53,7 +67,7 @@ const CenterPanel = () => {
           onClose={() => setSelectedMetric(null)}
         />
       )}
-    </ScrollArea>
+    </div>
   )
 }
 
