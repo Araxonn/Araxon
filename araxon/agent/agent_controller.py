@@ -42,37 +42,67 @@ class AgentController:
         mode = settings.AGENT_MODE or "graph"
         logger.info(f"[CONTROLLER] Agent run requested in mode={mode} for goal: {goal}")
 
-        if mode == "graph":
-            result = await self.graph.run(goal)
-            await self.voice_output.speak("Task complete.")
-            return result
+        if self.ui_bridge:
+            await self.ui_bridge.send_state("executing")
 
-        if mode == "plan":
-            steps = await self.planner.plan(goal)
-            summary = self.planner.format_plan_for_speech(steps)
-            await self.voice_output.speak(summary)
-            completed = await self.executor.execute(steps)
-            await self.voice_output.speak("Task complete.")
-            return "; ".join([s.get("result", "") for s in completed])
-
-        # auto mode: decide based on planner heuristics
-        if mode == "auto":
-            steps = await self.planner.plan(goal)
-            if len(steps) >= 3:
+        try:
+            if mode == "graph":
                 result = await self.graph.run(goal)
-                await self.voice_output.speak("Task complete.")
+                if self.voice_output.voice_enabled:
+                    await self.voice_output.speak("Task complete.")
+                else:
+                    await self.ui_bridge.send_transcript("assistant", "Task complete.")
                 return result
-            else:
+
+            if mode == "plan":
+                steps = await self.planner.plan(goal)
+                if self.ui_bridge:
+                    await self.ui_bridge.set_agent_steps(steps)
                 summary = self.planner.format_plan_for_speech(steps)
-                await self.voice_output.speak(summary)
+                if self.voice_output.voice_enabled:
+                    await self.voice_output.speak(summary)
+                else:
+                    await self.ui_bridge.send_transcript("assistant", summary)
                 completed = await self.executor.execute(steps)
-                await self.voice_output.speak("Task complete.")
+                if self.voice_output.voice_enabled:
+                    await self.voice_output.speak("Task complete.")
+                else:
+                    await self.ui_bridge.send_transcript("assistant", "Task complete.")
                 return "; ".join([s.get("result", "") for s in completed])
 
-        # Fallback to graph
-        result = await self.graph.run(goal)
-        await self.voice_output.speak("Task complete.")
-        return result
+            if mode == "auto":
+                steps = await self.planner.plan(goal)
+                if len(steps) >= 3:
+                    result = await self.graph.run(goal)
+                    if self.voice_output.voice_enabled:
+                        await self.voice_output.speak("Task complete.")
+                    else:
+                        await self.ui_bridge.send_transcript("assistant", "Task complete.")
+                    return result
+
+                if self.ui_bridge:
+                    await self.ui_bridge.set_agent_steps(steps)
+                summary = self.planner.format_plan_for_speech(steps)
+                if self.voice_output.voice_enabled:
+                    await self.voice_output.speak(summary)
+                else:
+                    await self.ui_bridge.send_transcript("assistant", summary)
+                completed = await self.executor.execute(steps)
+                if self.voice_output.voice_enabled:
+                    await self.voice_output.speak("Task complete.")
+                else:
+                    await self.ui_bridge.send_transcript("assistant", "Task complete.")
+                return "; ".join([s.get("result", "") for s in completed])
+
+            result = await self.graph.run(goal)
+            if self.voice_output.voice_enabled:
+                await self.voice_output.speak("Task complete.")
+            else:
+                await self.ui_bridge.send_transcript("assistant", "Task complete.")
+            return result
+        finally:
+            if self.ui_bridge:
+                await self.ui_bridge.send_state("listening")
 
     async def interrupt(self) -> None:
         """Interrupt any currently running execution or graph loop."""

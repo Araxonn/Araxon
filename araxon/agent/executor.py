@@ -61,6 +61,7 @@ class TaskExecutor:
                     "description": reason,
                     "status": "running",
                     "done": False,
+                    "percent": 25,
                 })
 
             if settings.AGENT_NARRATE_STEPS:
@@ -92,6 +93,8 @@ class TaskExecutor:
                     "description": reason,
                     "status": "done",
                     "done": True,
+                    "percent": 100,
+                    "result": str(result)[:500],
                 })
 
             if on_step_complete:

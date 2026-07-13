@@ -7,6 +7,12 @@ and prepares all subsystems for operation.
 
 import sys
 import asyncio
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(
+        asyncio.WindowsProactorEventLoopPolicy()
+    )
+
 import time
 import psutil
 from pathlib import Path
@@ -52,6 +58,7 @@ from araxon.vision import VisionRouter
 from araxon.voice import VoiceInputPipeline, VoiceOutputPipeline
 from araxon.agent import AgentController
 from araxon.ui import ARAxonWebSocketServer, UIBridge
+from araxon.ui.command_handler import UICommandHandler
 
 
 def print_banner():
@@ -114,6 +121,19 @@ async def main():
         voice_input_pipeline, voice_output_pipeline, brain, automation_router, agent_controller, internet_router, vision_router
     )
 
+    command_handler = UICommandHandler(
+        wake_orchestrator=wake_orchestrator,
+        long_term_memory=long_term_memory,
+        file_ingester=file_ingester,
+        brain=brain,
+        voice_input=voice_input_pipeline,
+        voice_output=voice_output_pipeline,
+        ui_bridge=ui_bridge,
+        automation_router=automation_router,
+        agent_controller=agent_controller,
+    )
+    websocket_server.set_command_handler(command_handler)
+
     await brain.warmup()
     await automation_router.initialize()
     logger.info(await long_term_memory.get_stats())
@@ -122,8 +142,10 @@ async def main():
     await voice_output_pipeline.speak("I can launch your MERN, Python, AI, or focus workspace.")
     logger.info("[ACTIVE] ARAXON is running. Press Ctrl+C to exit.")
 
-    # STEP 11: Start system stats broadcaster task
     stats_task = asyncio.create_task(_broadcast_system_stats(ui_bridge))
+    memory_task = asyncio.create_task(_broadcast_memory_stats(command_handler))
+    _install_ui_log_sink(ui_bridge)
+    await command_handler.broadcast_initial_state()
     start_time = time.time()
 
     try:
@@ -175,6 +197,7 @@ async def main():
             await wake_orchestrator.run_conversation_turn(heard_text)
     finally:
         stats_task.cancel()
+        memory_task.cancel()
         await vision_router.shutdown()
         await internet_router.shutdown()
         await wake_orchestrator.stop()
@@ -187,10 +210,10 @@ async def main():
 async def _broadcast_system_stats(ui_bridge):
     """Periodically broadcast system statistics to the UI."""
     start_time = time.time()
+    previous_net_bytes = None
     
     while True:
         try:
-            # Collect system statistics
             stats = {
                 "cpu": psutil.cpu_percent(interval=0.1),
                 "ram": psutil.virtual_memory().percent,
@@ -198,22 +221,26 @@ async def _broadcast_system_stats(ui_bridge):
                 "battery": psutil.sensors_battery().percent if psutil.sensors_battery() else 100,
             }
             
-            # Add uptime
             uptime_seconds = int(time.time() - start_time)
             hours = uptime_seconds // 3600
             minutes = (uptime_seconds % 3600) // 60
             seconds = uptime_seconds % 60
             stats["uptime"] = f"{hours}h {minutes}m {seconds}s"
             
-            # Try to get GPU and network stats (may fail on some systems)
             try:
-                # Simple network stats (bytes sent/received)
                 net_io = psutil.net_io_counters()
-                stats["net"] = (net_io.bytes_sent + net_io.bytes_recv) / (1024 * 1024 * 1024)  # GB
-            except:
+                total_bytes = net_io.bytes_sent + net_io.bytes_recv
+                if previous_net_bytes is not None:
+                    delta = max(0, total_bytes - previous_net_bytes)
+                    mbps = (delta * 8) / (settings.UI_SYSTEM_STATS_UPDATE_INTERVAL * 1_000_000)
+                    stats["net"] = round(mbps * 10, 1)
+                else:
+                    stats["net"] = 0
+                previous_net_bytes = total_bytes
+            except Exception:
                 stats["net"] = 0
             
-            stats["gpu"] = 0  # GPU stats would require additional libraries
+            stats["gpu"] = 0
             
             await ui_bridge.send_system_stats(stats)
             await asyncio.sleep(settings.UI_SYSTEM_STATS_UPDATE_INTERVAL)
@@ -222,6 +249,44 @@ async def _broadcast_system_stats(ui_bridge):
         except Exception as e:
             logger.error(f"Error broadcasting system stats: {e}")
             await asyncio.sleep(settings.UI_SYSTEM_STATS_UPDATE_INTERVAL)
+
+
+async def _broadcast_memory_stats(command_handler):
+    """Periodically broadcast memory statistics to the UI."""
+    while True:
+        try:
+            await command_handler._broadcast_memory_stats()
+            await asyncio.sleep(15)
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            logger.error(f"Error broadcasting memory stats: {e}")
+            await asyncio.sleep(15)
+
+
+def _install_ui_log_sink(ui_bridge):
+    """Forward important log lines to the UI Logs tab."""
+    loop = asyncio.get_running_loop()
+
+    def _sink(message):
+        record = message.record
+        if not str(record["name"]).startswith("araxon"):
+            return
+        level = record["level"].name
+        if level not in {"INFO", "WARNING", "ERROR", "SUCCESS"}:
+            return
+        text = record["message"]
+        module = record["name"].split(".")[-1]
+        asyncio.run_coroutine_threadsafe(
+            ui_bridge.send_log_line(level, text, module),
+            loop,
+        )
+
+    try:
+        from loguru import logger as loguru_logger
+        loguru_logger.add(_sink, level="INFO", format="{message}")
+    except Exception as exc:
+        logger.warning(f"Could not install UI log sink: {exc}")
 
 
 if __name__ == "__main__":
