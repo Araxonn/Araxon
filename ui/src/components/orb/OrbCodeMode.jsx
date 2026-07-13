@@ -1,45 +1,38 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Code2 } from 'lucide-react'
+import VoiceWaveform from './VoiceWaveform'
 
 const OrbCodeMode = () => {
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <motion.div
         className="relative w-48 h-48"
-        animate={{ scale: [1, 1.03, 1] }}
+        animate={{ scale: [1, 1.02, 1] }}
         transition={{ duration: 2.5, repeat: Infinity }}
       >
-        {/* Pulsing rings */}
         <motion.div
-          className="absolute inset-0 rounded-full border-2 border-arx-purple/50"
-          animate={{ scale: [1, 1.2], opacity: [1, 0] }}
+          className="absolute inset-0 rounded-full border-2 border-arx-purple/40 shadow-[0_0_20px_rgba(139,92,246,0.3)]"
+          animate={{ opacity: [0.4, 0.8, 0.4] }}
           transition={{ duration: 2, repeat: Infinity }}
         />
 
-        <motion.div
-          className="absolute inset-4 rounded-full border border-arx-purple/30"
-          animate={{ scale: [1.2, 1], opacity: [0, 1] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        />
+        <div className="absolute inset-4 rounded-full border border-arx-purple/20" />
 
-        {/* Inner orb */}
-        <div className="absolute inset-8 rounded-full bg-gradient-to-b from-arx-purple to-arx-orb flex items-center justify-center shadow-2xl">
-          <Code2 className="text-white text-4xl" />
+        <div className="absolute inset-7 rounded-full bg-gradient-to-b from-arx-purple/30 via-arx-orb/40 to-arx-bg shadow-arx-inner flex items-center justify-center overflow-hidden">
+          <VoiceWaveform />
+          <div className="relative z-10">
+            <Code2 className="text-arx-purple w-10 h-10 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]" />
+          </div>
         </div>
 
-        {/* Code mode text */}
-        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-arx-purple text-sm font-semibold tracking-widest">
-          CODE MODE
+        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
+          <span className="arx-status-pill bg-arx-purple/10 text-arx-purple border border-arx-purple/30">
+            <span className="w-1.5 h-1.5 bg-arx-purple rounded-full" />
+            Code Mode Active
+          </span>
         </div>
       </motion.div>
-
-      {/* Syntax highlight indicator */}
-      <div className="text-center text-xs text-arx-secondary font-mono">
-        <div className="text-arx-purple">{'<'}</div>
-        <div>Ready for analysis</div>
-        <div className="text-arx-purple">{'>'}</div>
-      </div>
     </div>
   )
 }

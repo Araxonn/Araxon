@@ -1,50 +1,70 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Loader2 } from 'lucide-react'
+import { useAppStore } from '../../store/useAppStore'
+import VoiceWaveform from './VoiceWaveform'
+import ArxonLogo from '../ui/ArxonLogo'
 
 const OrbExecuting = () => {
+  const { executionProgress } = useAppStore()
+  const progress = executionProgress || 75
+
   return (
-    <div className="flex flex-col items-center justify-center gap-6">
+    <div className="flex flex-col items-center justify-center gap-4">
       <motion.div
-        className="relative w-48 h-48"
+        className="relative w-56 h-56"
         animate={{ scale: [1, 1.02, 1] }}
         transition={{ duration: 1.5, repeat: Infinity }}
       >
-        {/* Rotating rings */}
+        <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+          <circle
+            cx="50"
+            cy="50"
+            r="46"
+            fill="none"
+            stroke="rgba(30,41,59,0.5)"
+            strokeWidth="3"
+          />
+          <motion.circle
+            cx="50"
+            cy="50"
+            r="46"
+            fill="none"
+            stroke="url(#progressGradient)"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeDasharray={`${progress * 2.89} 289`}
+            initial={{ strokeDasharray: '0 289' }}
+            animate={{ strokeDasharray: `${progress * 2.89} 289` }}
+            transition={{ duration: 1 }}
+          />
+          <defs>
+            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#3B82F6" />
+              <stop offset="100%" stopColor="#06B6D4" />
+            </linearGradient>
+          </defs>
+        </svg>
+
         <motion.div
-          className="absolute inset-0 rounded-full border-2 border-transparent border-t-arx-blue border-r-arx-cyan"
+          className="absolute inset-2 rounded-full border border-arx-blue/30"
           animate={{ rotate: 360 }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+          transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
         />
 
-        <motion.div
-          className="absolute inset-4 rounded-full border-2 border-transparent border-b-arx-green border-l-arx-orange"
-          animate={{ rotate: -360 }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-        />
-
-        {/* Inner orb */}
-        <div className="absolute inset-8 rounded-full bg-gradient-to-b from-arx-blue to-arx-orb flex items-center justify-center shadow-2xl">
-          <Loader2 className="text-white text-3xl animate-spin" />
+        <div className="absolute inset-8 rounded-full bg-gradient-to-b from-arx-blue/25 via-arx-orb/50 to-arx-bg shadow-arx-inner flex items-center justify-center overflow-hidden">
+          <VoiceWaveform />
+          <div className="relative z-10 text-center">
+            <div className="text-3xl font-bold text-arx-cyan-bright">{progress}%</div>
+          </div>
         </div>
 
-        {/* Executing text */}
-        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-arx-green text-sm font-semibold tracking-widest">
-          EXECUTING...
+        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
+          <span className="arx-status-pill bg-arx-green/10 text-arx-green border border-arx-green/30">
+            <span className="w-1.5 h-1.5 bg-arx-green rounded-full animate-pulse" />
+            Executing...
+          </span>
         </div>
       </motion.div>
-
-      {/* Progress indicator */}
-      <div className="w-64 text-center">
-        <div className="text-3xl font-bold text-arx-cyan mb-2">75%</div>
-        <div className="h-1 bg-arx-card rounded-full overflow-hidden">
-          <motion.div
-            className="h-full bg-gradient-to-r from-arx-blue to-arx-cyan"
-            animate={{ width: '75%' }}
-            transition={{ duration: 0.5 }}
-          />
-        </div>
-      </div>
     </div>
   )
 }
