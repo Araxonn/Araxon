@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import os
+import subprocess
 
 from araxon.core.config import settings
 from araxon.core.logger import logger
@@ -55,7 +57,17 @@ class WorkspaceManager:
 			try:
 				logger.info(f"[ACTIVE] Launching workspace '{normalized_profile}' step {index + 1}: {step}")
 				lower_step = step.strip().lower()
-				if lower_step.startswith(("http://", "https://")):
+				if lower_step.startswith("start cmd"):
+					subprocess.Popen(
+						step,
+						shell=True,
+						creationflags=subprocess.CREATE_NEW_CONSOLE if os.name == "nt" else 0,
+					)
+					result = "Terminal opened: " + step
+				elif lower_step == "code ." or lower_step.startswith("code"):
+					os.system(step)
+					result = "VS Code opened"
+				elif lower_step.startswith(("http://", "https://")):
 					result = await self.web_launcher.open(step)
 				elif lower_step in settings.APP_MAP:
 					result = await self.app_launcher.launch(lower_step)

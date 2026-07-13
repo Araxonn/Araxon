@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import os
 import shlex
+import subprocess
 
 from araxon.core.config import settings
 from araxon.core.logger import logger
@@ -43,10 +44,27 @@ class CommandRunner:
 	async def _execute(self, command: str) -> str:
 		"""Run a shell command and return a trimmed summary of its output."""
 		logger.info(f"[ACTIVE] Executing command: {command}")
+		stripped_command = command.strip()
+		if stripped_command.startswith("start cmd"):
+			subprocess.Popen(
+				stripped_command,
+				shell=True,
+				creationflags=subprocess.CREATE_NEW_CONSOLE if os.name == "nt" else 0,
+			)
+			return "Terminal opened successfully."
+
+		if stripped_command == "code .":
+			try:
+				os.system(stripped_command)
+				return "VS Code opened"
+			except Exception as exc:
+				logger.warning(f"[ACTIVE] os.system fallback failed for code .: {exc}")
+
 		process = await asyncio.create_subprocess_shell(
-			command,
+			stripped_command,
 			stdout=asyncio.subprocess.PIPE,
 			stderr=asyncio.subprocess.PIPE,
+			shell=True,
 		)
 		try:
 			stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=self._timeout_seconds)

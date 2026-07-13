@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import asyncio
+import sys
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote_plus
+
+if sys.platform == "win32":
+	asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 from araxon.core.config import settings
 from araxon.core.logger import logger
@@ -51,19 +55,18 @@ class BrowserAgent:
 		if self._started and self.browser is not None and self.page is not None:
 			return
 
-		if async_playwright is None:
-			logger.warning("[ACTIVE] Playwright is unavailable; browser automation is disabled.")
-			return
-
 		try:
+			if async_playwright is None:
+				raise RuntimeError("playwright is not installed")
 			self.playwright = await async_playwright().start()
 			self.browser = await self.playwright.chromium.launch(headless=settings.BROWSER_HEADLESS)
 			self.context = await self.browser.new_context()
 			self.page = await self.context.new_page()
 			self._started = True
-			logger.info("[ACTIVE] Browser agent started.")
+			logger.info("[ACTIVE] Browser agent started successfully.")
 		except Exception as exc:
 			logger.error(f"[ACTIVE] Browser start failed: {exc}")
+			logger.warning("Browser automation unavailable. Install playwright: pip install playwright then: python -m playwright install chromium")
 			self.browser = None
 			self.context = None
 			self.page = None
@@ -92,6 +95,8 @@ class BrowserAgent:
 		"""Navigate to a URL and return the page title."""
 		if not await self._ensure_started():
 			return "Browser automation unavailable."
+		if not self.page:
+			return "Browser not available. Playwright not running."
 
 		start_time = asyncio.get_event_loop().time()
 		try:
@@ -108,6 +113,8 @@ class BrowserAgent:
 		"""Search Google and return the top three result titles and URLs."""
 		if not await self._ensure_started():
 			return "Browser automation unavailable."
+		if not self.page:
+			return "Browser not available. Playwright not running."
 
 		start_time = asyncio.get_event_loop().time()
 		search_url = f"https://www.google.com/search?q={quote_plus(query)}"
@@ -135,6 +142,8 @@ class BrowserAgent:
 		"""Search YouTube and return the top three video titles."""
 		if not await self._ensure_started():
 			return "Browser automation unavailable."
+		if not self.page:
+			return "Browser not available. Playwright not running."
 
 		start_time = asyncio.get_event_loop().time()
 		search_url = f"https://www.youtube.com/results?search_query={quote_plus(query)}"
@@ -161,6 +170,8 @@ class BrowserAgent:
 		"""Load a URL and return a short text summary from the page body."""
 		if not await self._ensure_started():
 			return "Browser automation unavailable."
+		if not self.page:
+			return "Browser not available. Playwright not running."
 
 		start_time = asyncio.get_event_loop().time()
 		try:
@@ -178,6 +189,8 @@ class BrowserAgent:
 		"""Take a screenshot of the current page and return the saved path."""
 		if not await self._ensure_started():
 			return "Browser automation unavailable."
+		if not self.page:
+			return "Browser not available. Playwright not running."
 
 		start_time = asyncio.get_event_loop().time()
 		try:
