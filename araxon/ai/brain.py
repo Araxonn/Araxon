@@ -136,9 +136,7 @@ class ARAXONBrain:
 
         self.memory.add_user(user_input)
         
-        # STEP 11: Send user transcript to UI
         if self.ui_bridge:
-            await self.ui_bridge.send_transcript("user", user_input)
             await self.ui_bridge.send_state("thinking")
         
         base_messages = self.memory.get_context_messages()
@@ -153,7 +151,7 @@ class ARAXONBrain:
             
             # STEP 11: Send ARAXON transcript to UI
             if self.ui_bridge:
-                await self.ui_bridge.send_transcript("araxon", response_text)
+                await self.ui_bridge.send_transcript("assistant", response_text)
             
             if self.long_term_memory:
                 asyncio.create_task(self.long_term_memory.save_exchange(user_input, response_text))

@@ -37,6 +37,11 @@ class ARAxonWebSocketServer:
         self.connected_clients: Set[WebSocketServerProtocol] = set()
         self.server: Optional[Any] = None
         self.running = False
+        self.command_handler = None
+
+    def set_command_handler(self, handler) -> None:
+        """Attach the UI command handler used for inbound messages."""
+        self.command_handler = handler
 
     async def start(self):
         """Start the WebSocket server as a background task."""
@@ -118,51 +123,7 @@ class ARAxonWebSocketServer:
         msg_data = data.get("data", {})
 
         try:
-            if msg_type == "command":
-                # Frontend sends a text command
-                text = msg_data.get("text", "")
-                logger.info(f"UI command received: {text}")
-                # Queue for processing in voice_input_pipeline
-                # This will be picked up by the main command router
-
-            elif msg_type == "routine":
-                # Frontend requests a routine launch
-                routine_name = msg_data.get("name")
-                logger.info(f"UI routine requested: {routine_name}")
-                # Queue routine to execute
-
-            elif msg_type == "ingest_file":
-                # Frontend ingests a file
-                content = msg_data.get("content", "")
-                name = msg_data.get("name", "unknown")
-                logger.info(f"UI file ingestion: {name}")
-                # Queue for file ingestion in memory system
-
-            elif msg_type == "mic_toggle":
-                # Toggle microphone
-                enabled = msg_data.get("enabled", False)
-                logger.info(f"UI mic toggle: {enabled}")
-                # Update VAD or listening state
-
-            elif msg_type == "voice_toggle":
-                # Toggle voice output
-                enabled = msg_data.get("enabled", False)
-                logger.info(f"UI voice toggle: {enabled}")
-                # Update TTS output state
-
-            elif msg_type == "settings_update":
-                # Frontend updates settings
-                logger.info(f"UI settings update: {msg_data}")
-                # Apply settings to system
-
-            elif msg_type == "nav_change":
-                # Frontend navigation changed
-                nav = msg_data.get("nav")
-                logger.info(f"UI navigation: {nav}")
-                # Send relevant data based on navigation
-
-            elif msg_type == "ping":
-                # Frontend ping request
+            if msg_type == "ping":
                 await self.broadcast({
                     "type": "pong",
                     "data": {
@@ -170,9 +131,13 @@ class ARAxonWebSocketServer:
                         "timestamp": datetime.now().isoformat()
                     }
                 })
+                return
 
-            else:
-                logger.warning(f"Unknown message type from UI: {msg_type}")
+            if self.command_handler is not None:
+                await self.command_handler.handle(msg_type, msg_data)
+                return
+
+            logger.warning(f"No command handler registered for UI message: {msg_type}")
 
         except Exception as e:
             logger.error(f"Error handling UI message type {msg_type}: {e}")
