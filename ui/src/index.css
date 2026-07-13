@@ -2,6 +2,7 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 @import "tailwindcss";
+@config "../tailwind.config.js";
 
 @tailwind base;
 
@@ -26,9 +27,9 @@
     @apply border-border outline-ring/50;
   }
   body {
-    background-color: #080B14;
+    background-color: #05070a;
     color: #F1F5F9;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Geist Variable', system-ui, sans-serif;
     overflow: hidden;
     @apply bg-background text-foreground;
   }
@@ -51,9 +52,114 @@
   }
 }
 
+@layer components {
+  .arx-panel {
+    background-color: color-mix(in srgb, var(--color-arx-card) 60%, transparent);
+    border: 1px solid var(--color-arx-border);
+    backdrop-filter: blur(4px);
+  }
+  .arx-glass {
+    background-color: color-mix(in srgb, var(--color-arx-card) 40%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-arx-border) 80%, transparent);
+    backdrop-filter: blur(12px);
+  }
+  .arx-nav-active {
+    background-color: var(--color-arx-active);
+    color: var(--color-arx-blue);
+    border-left: 2px solid var(--color-arx-blue);
+    box-shadow: inset 0 0 12px rgba(59, 130, 246, 0.08);
+  }
+  .arx-mode-active {
+    background-color: var(--color-arx-active);
+    color: var(--color-arx-blue);
+    border: 1px solid var(--color-arx-border-glow);
+    box-shadow: var(--shadow-arx-glow-sm);
+  }
+  .arx-metric-card {
+    background-color: color-mix(in srgb, var(--color-arx-card) 40%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-arx-border) 80%, transparent);
+    backdrop-filter: blur(12px);
+    border-radius: 0.5rem;
+    padding: 0.625rem;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .arx-metric-card:hover {
+    border-color: var(--color-arx-border-glow);
+  }
+  .arx-input-field {
+    background-color: var(--color-arx-input);
+    border: 1px solid var(--color-arx-border);
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--color-arx-text);
+    transition: all 0.2s;
+  }
+  .arx-input-field:focus-within {
+    outline: none;
+    border-color: color-mix(in srgb, var(--color-arx-blue) 60%, transparent);
+    box-shadow: var(--shadow-arx-glow-sm);
+  }
+  .arx-chip {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    border-radius: 9999px;
+    border: 1px solid var(--color-arx-border);
+    color: var(--color-arx-secondary);
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .arx-chip:hover {
+    border-color: color-mix(in srgb, var(--color-arx-blue) 50%, transparent);
+    color: var(--color-arx-text);
+  }
+  .arx-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: 'Geist Variable', sans-serif;
+
+  --color-arx-bg: #05070a;
+  --color-arx-sidebar: #080b12;
+  --color-arx-card: #0c1019;
+  --color-arx-card-hover: #111827;
+  --color-arx-input: #0f1419;
+  --color-arx-border: #1a2332;
+  --color-arx-border-glow: rgba(59, 130, 246, 0.25);
+  --color-arx-blue: #3b82f6;
+  --color-arx-blue-bright: #60a5fa;
+  --color-arx-cyan: #06b6d4;
+  --color-arx-cyan-bright: #22d3ee;
+  --color-arx-green: #10b981;
+  --color-arx-purple: #8b5cf6;
+  --color-arx-orange: #f59e0b;
+  --color-arx-orb: #1d4ed8;
+  --color-arx-muted: #64748b;
+  --color-arx-secondary: #94a3b8;
+  --color-arx-text: #f1f5f9;
+  --color-arx-red: #ef4444;
+  --color-arx-active: rgba(59, 130, 246, 0.12);
+  --color-arx-glow: rgba(59, 130, 246, 0.35);
+
+  --shadow-arx-glow: 0 0 20px rgba(59, 130, 246, 0.35), 0 0 60px rgba(59, 130, 246, 0.15);
+  --shadow-arx-glow-sm: 0 0 12px rgba(59, 130, 246, 0.3);
+  --shadow-arx-glow-lg: 0 0 30px rgba(59, 130, 246, 0.4), 0 0 80px rgba(59, 130, 246, 0.2);
+  --shadow-arx-inner: inset 0 0 20px rgba(59, 130, 246, 0.15);
+
+  --background-image-arx-radial: radial-gradient(ellipse at center, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+  --background-image-arx-grid: linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+  --background-size-grid: 32px 32px;
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
