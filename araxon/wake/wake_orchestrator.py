@@ -155,6 +155,9 @@ class WakeOrchestrator:
 	async def run_conversation_turn(self, text: str) -> None:
 		"""Run one full think-and-speak response cycle and refresh sleep timing."""
 		try:
+			if self.brain.ui_bridge:
+				await self.brain.ui_bridge.send_transcript("user", text)
+
 			# If an AgentController exists, determine whether this text should
 			# be handled by the autonomous agent instead of the automation router.
 			if self.agent_controller is not None and await self.agent_controller.is_agent_task(text):
