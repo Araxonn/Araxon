@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import inspect
 import threading
 from typing import Awaitable, Callable
@@ -20,8 +21,14 @@ class VoiceInputPipeline:
         self.listener = MicrophoneListener()
         self.transcriber = WhisperTranscriber()
         self.is_speaking = False
+        self.mic_enabled = True
         self._stop_event = threading.Event()
         self.ui_bridge = ui_bridge
+
+    def set_mic_enabled(self, enabled: bool) -> None:
+        """Enable or disable microphone capture from the UI."""
+        self.mic_enabled = bool(enabled)
+        logger.info(f"Microphone {'enabled' if self.mic_enabled else 'disabled'} from UI.")
 
     def set_speaking(self, value: bool) -> None:
         """Toggle the anti-self-hearing flag from outside the pipeline."""
@@ -31,6 +38,10 @@ class VoiceInputPipeline:
 
     async def listen_and_transcribe(self) -> str:
         """Listen for one speech segment and return its cleaned transcription."""
+        if not self.mic_enabled:
+            await asyncio.sleep(0.5)
+            return ""
+
         if self.is_speaking:
             logger.info("Voice pipeline is muted because ARAXON is currently speaking.")
             return ""

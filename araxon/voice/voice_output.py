@@ -28,6 +28,7 @@ class VoiceOutputPipeline:
         self.synthesizer = KokoroSynthesizer()
         self.audio_player = AudioPlayer()
         self._is_speaking = False
+        self.voice_enabled = True
         self._speak_lock = asyncio.Lock()
         self._playback_task: asyncio.Task | None = None
         self.ui_bridge = ui_bridge
@@ -48,8 +49,19 @@ class VoiceOutputPipeline:
         """Attach or detach the clap detector used to mute self-triggered wake events."""
         self.clap_detector = clap_detector
 
+    def set_voice_enabled(self, enabled: bool) -> None:
+        """Enable or disable spoken responses from the UI."""
+        self.voice_enabled = bool(enabled)
+        logger.info(f"Voice output {'enabled' if self.voice_enabled else 'disabled'} from UI.")
+
     async def speak(self, text: str) -> None:
         """Mute the microphone, synthesize text, play it, and then unmute the microphone."""
+        if not self.voice_enabled:
+            sanitized_text = sanitize_text(text)
+            if sanitized_text and self.ui_bridge:
+                await self.ui_bridge.send_transcript("assistant", sanitized_text)
+            return
+
         async with self._speak_lock:
             start_time = time.monotonic()
             self._is_speaking = True
